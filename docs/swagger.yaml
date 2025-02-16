@@ -1,0 +1,172 @@
+basePath: /api
+definitions:
+  models.Action:
+    properties:
+      cmd:
+        type: string
+      description:
+        type: string
+      lastLaunch:
+        $ref: '#/definitions/models.DateOnly'
+      name:
+        type: string
+      shortDesc:
+        type: string
+    type: object
+  models.ActionStatus:
+    properties:
+      description:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+    type: object
+  models.DateOnly:
+    properties:
+      time.Time:
+        type: string
+    type: object
+externalDocs:
+  description: OpenAPI
+  url: https://swagger.io/resources/open-api/
+host: localhost
+info:
+  contact:
+    email: support@swagger.io
+    name: API Support
+    url: http://www.swagger.io/support
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  termsOfService: http://swagger.io/terms/
+  title: Diplom API
+  version: "1.0"
+paths:
+  /actions:
+    get:
+      description: Возращает список id всех доступных action
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              items:
+                type: integer
+              type: array
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      summary: Get list of actions ids
+      tags:
+      - Actions
+  /actions/{id}:
+    get:
+      description: Возращает Action соответсвующую указанному ID
+      parameters:
+      - description: id Action
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              $ref: '#/definitions/models.Action'
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            type: string
+      summary: Get concrete Action
+      tags:
+      - Actions
+  /actions/{id}/run:
+    get:
+      description: Запускает Action соответсвующую указанному ID
+      parameters:
+      - description: id Action
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            type: string
+      summary: Run concrete Action
+      tags:
+      - Actions
+  /actions/{id}/status:
+    get:
+      description: Возвращает информацию о статусе Action
+      parameters:
+      - description: id Action
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              $ref: '#/definitions/models.ActionStatus'
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            type: string
+      summary: Get concrete Action's status
+      tags:
+      - Actions
+  /actions/{id}/stop:
+    get:
+      description: Останавливает Action соответсвующую указанному ID
+      parameters:
+      - description: id Action
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            type: string
+      summary: Stops concrete Action
+      tags:
+      - Actions
+securityDefinitions:
+  BasicAuth:
+    type: basic
+swagger: "2.0"
