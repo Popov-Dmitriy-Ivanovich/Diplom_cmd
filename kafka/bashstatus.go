@@ -3,6 +3,7 @@ package kafka
 import (
 	"errors"
 	"strconv"
+	"time"
 
 	"github.com/IBM/sarama"
 	"github.com/Popov-Dmitriy-Ivanovich/Diplom_cmd/models"
@@ -44,6 +45,7 @@ func ServeStatusMessages() error {
 					status := string(msg.Value)
 					if status == "Launched" {
 						action.StatusID = 1
+						action.LastLaunch = &models.DateOnly{Time: time.Now()}
 					} else if status=="Stoped"{
 						action.StatusID = 3
 					}else {
