@@ -68,6 +68,31 @@ paths:
       summary: Get list of actions ids
       tags:
       - Actions
+    post:
+      description: Создает action. Доступен только админу
+      parameters:
+      - description: Данные пользователя для создания
+        in: body
+        name: data
+        required: true
+        schema:
+          $ref: '#/definitions/models.Action'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              $ref: '#/definitions/models.Action'
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            type: string
+      summary: Create action
+      tags:
+      - User
   /actions/{id}:
     get:
       description: Возращает Action соответсвующую указанному ID
@@ -166,6 +191,56 @@ paths:
       summary: Stops concrete Action
       tags:
       - Actions
+  /user/{id}:
+    delete:
+      description: Удаляет пользователя. Доступен только админу
+      parameters:
+      - description: id User
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              $ref: '#/definitions/models.Action'
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            type: string
+      summary: Delete user
+      tags:
+      - User
+    put:
+      description: Обновляет action. Доступен только админу
+      parameters:
+      - description: Данные пользователя для action
+        in: body
+        name: data
+        required: true
+        schema:
+          $ref: '#/definitions/models.Action'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              $ref: '#/definitions/models.Action'
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            type: string
+      summary: Update action
+      tags:
+      - User
 securityDefinitions:
   BasicAuth:
     type: basic

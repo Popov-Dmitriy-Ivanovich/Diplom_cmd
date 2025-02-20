@@ -3,21 +3,28 @@ package actions
 import (
 	"github.com/Popov-Dmitriy-Ivanovich/Diplom_cmd/kafka"
 	"github.com/Popov-Dmitriy-Ivanovich/Diplom_cmd/models"
-
+	authmodels "github.com/Popov-Dmitriy-Ivanovich/Diplom_auth/models"
+	"github.com/Popov-Dmitriy-Ivanovich/Diplom_auth/middleware"
 	"github.com/gin-gonic/gin"
 )
 
 type Action struct {
 
 }
+//AR_VIEW_AND_RUN_ACTION
 
 func (a *Action) WriteRoutes (rg *gin.RouterGroup) {
 	actionGroup := rg.Group("/actions")
+	actionGroup.Use(middleware.AuthMiddleware(authmodels.AR_VIEW_AND_RUN_ACTION))
 	actionGroup.GET("/", a.Get())
 	actionGroup.GET("/:id", a.GetId())
 	actionGroup.GET("/:id/run", a.Run())
 	actionGroup.GET("/:id/status", a.Status())
 	actionGroup.GET("/:id/stop", a.Stop())
+	actionGroup.Use(middleware.AuthMiddleware(authmodels.AR_CREATE_ACTION))
+	actionGroup.POST("/", a.Create())
+	actionGroup.PUT("/:id",a.Update())
+	actionGroup.DELETE("/:id", a.Delete())
 }
 // Get
 // @Summary      Get list of actions ids
