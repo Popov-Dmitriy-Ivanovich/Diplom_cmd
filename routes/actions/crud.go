@@ -1,6 +1,8 @@
 package actions
 
 import (
+	"errors"
+	tgApi "github.com/Popov-Dmitriy-Ivanovich/Diplom_telegram/api"
 	"github.com/Popov-Dmitriy-Ivanovich/Diplom_cmd/models"
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
@@ -33,6 +35,7 @@ func (a *Action) Create() gin.HandlerFunc {
 			c.AbortWithError(422, err)
 			return
 		}
+		tgApi.Notify("Создано новое действие")
 		c.JSON(200, gin.H{"action":action})
 	}
 }
@@ -59,6 +62,10 @@ func (a *Action) Update() gin.HandlerFunc {
 			c.AbortWithError(404, err)
 			return
 		}
+		if action.StatusID != 3{
+			c.AbortWithError(409, errors.New("Разрешено обновлять только остановленные действия"))
+			return
+		}
 		action.LastLaunch = body.LastLaunch
 		action.Name = body.Name
 		action.Description = body.Description
@@ -68,6 +75,7 @@ func (a *Action) Update() gin.HandlerFunc {
 			c.AbortWithError(500, err)
 			return
 		}
+		tgApi.Notify("Действие обновлено")
 		c.JSON(200, gin.H{"action": action})
 	}
 }
@@ -90,12 +98,15 @@ func (u *Action) Delete() gin.HandlerFunc {
 			c.AbortWithError(404, err)
 			return
 		}
-
+		if action.StatusID != 3{
+			c.AbortWithError(409, errors.New("Разрешено удалять только остановленные действия"))
+			return
+		}
 		if err := db.Delete(&action).Error; err != nil {
 			c.AbortWithError(500, err)
 			return
 		}
-
+		tgApi.Notify("Действие удалено")
 		c.JSON(200, gin.H{"action": action})
 	}
 }

@@ -1,6 +1,7 @@
 package kafka
 
 import (
+	"os"
 	"strconv"
 
 	"github.com/IBM/sarama"
@@ -8,7 +9,7 @@ import (
 )
 
 func RunAction(action models.Action)(error){
-	prod, err := sarama.NewSyncProducer([]string{"kafka:9092"},nil)
+	prod, err := sarama.NewSyncProducer([]string{os.Getenv("KAFKA_URL")},nil)
 	if err != nil {
 		return err
 	}
@@ -26,7 +27,7 @@ func RunAction(action models.Action)(error){
 }
 
 func StopAction(action models.Action)(error){
-	prod, err := sarama.NewSyncProducer([]string{"kafka:9092"},nil)
+	prod, err := sarama.NewSyncProducer([]string{os.Getenv("KAFKA_URL")},nil)
 	if err != nil {
 		return err
 	}

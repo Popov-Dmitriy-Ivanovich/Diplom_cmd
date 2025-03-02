@@ -1,10 +1,11 @@
 package actions
 
 import (
+	"github.com/Popov-Dmitriy-Ivanovich/Diplom_auth/middleware"
+	authmodels "github.com/Popov-Dmitriy-Ivanovich/Diplom_auth/models"
 	"github.com/Popov-Dmitriy-Ivanovich/Diplom_cmd/kafka"
 	"github.com/Popov-Dmitriy-Ivanovich/Diplom_cmd/models"
-	authmodels "github.com/Popov-Dmitriy-Ivanovich/Diplom_auth/models"
-	"github.com/Popov-Dmitriy-Ivanovich/Diplom_auth/middleware"
+	tgApi "github.com/Popov-Dmitriy-Ivanovich/Diplom_telegram/api"
 	"github.com/gin-gonic/gin"
 )
 
@@ -96,6 +97,7 @@ func (a *Action) Run() gin.HandlerFunc {
 			c.AbortWithError(500, err)
 			return
 		}
+		tgApi.Notify("Действие " + action.Name + "переведено в статус Запускается")
 		c.JSON(200, gin.H{"action": action.Cmd})
 	}
 }
@@ -151,6 +153,7 @@ func (a *Action) Stop() gin.HandlerFunc {
 			c.AbortWithError(500, err)
 			return
 		}
+		tgApi.Notify("Действие " + action.Name + "переведено в статус Останавливается")
 		c.JSON(200, gin.H{"action": action.Cmd})
 	}
 }
