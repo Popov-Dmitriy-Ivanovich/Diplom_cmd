@@ -1,6 +1,8 @@
 package actions
 
 import (
+	"time"
+
 	"github.com/Popov-Dmitriy-Ivanovich/Diplom_auth/middleware"
 	authmodels "github.com/Popov-Dmitriy-Ivanovich/Diplom_auth/models"
 	"github.com/Popov-Dmitriy-Ivanovich/Diplom_cmd/kafka"
@@ -10,11 +12,11 @@ import (
 )
 
 type Action struct {
-
 }
+
 //AR_VIEW_AND_RUN_ACTION
 
-func (a *Action) WriteRoutes (rg *gin.RouterGroup) {
+func (a *Action) WriteRoutes(rg *gin.RouterGroup) {
 	actionGroup := rg.Group("/actions")
 	actionGroup.Use(middleware.AuthMiddleware(authmodels.AR_VIEW_AND_RUN_ACTION))
 	actionGroup.GET("/", a.Get())
@@ -24,9 +26,10 @@ func (a *Action) WriteRoutes (rg *gin.RouterGroup) {
 	actionGroup.GET("/:id/stop", a.Stop())
 	actionGroup.Use(middleware.AuthMiddleware(authmodels.AR_CREATE_ACTION))
 	actionGroup.POST("/", a.Create())
-	actionGroup.PUT("/:id",a.Update())
+	actionGroup.PUT("/:id", a.Update())
 	actionGroup.DELETE("/:id", a.Delete())
 }
+
 // Get
 // @Summary      Get list of actions ids
 // @Description  Возращает список id всех доступных action
@@ -40,7 +43,7 @@ func (a *Action) Get() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		db := models.GetDb()
 		ids := []uint{}
-		if err := db.Model(models.Action{}).Pluck("id",&ids).Error; err != nil {
+		if err := db.Model(models.Action{}).Pluck("id", &ids).Error; err != nil {
 			c.AbortWithError(500, err)
 			return
 		}
@@ -62,8 +65,8 @@ func (a *Action) GetId() gin.HandlerFunc {
 		id := c.Param("id")
 		db := models.GetDb()
 		action := models.Action{}
-		if err := db.First(&action,id).Error; err != nil {
-			c.AbortWithError(404,err)
+		if err := db.First(&action, id).Error; err != nil {
+			c.AbortWithError(404, err)
 			return
 		}
 		c.JSON(200, gin.H{"action": action})
@@ -84,8 +87,8 @@ func (a *Action) Run() gin.HandlerFunc {
 		id := c.Param("id")
 		db := models.GetDb()
 		action := models.Action{}
-		if err := db.First(&action,id).Error; err != nil {
-			c.AbortWithError(404,err)
+		if err := db.First(&action, id).Error; err != nil {
+			c.AbortWithError(404, err)
 			return
 		}
 		if err := kafka.RunAction(action); err != nil {
@@ -93,6 +96,7 @@ func (a *Action) Run() gin.HandlerFunc {
 			return
 		}
 		action.StatusID = 2
+		action.Events = append(action.Events, models.Event{Type: "Launch", TimeStamp: time.Now()})
 		if err := db.Save(&action).Error; err != nil {
 			c.AbortWithError(500, err)
 			return
@@ -140,8 +144,8 @@ func (a *Action) Stop() gin.HandlerFunc {
 		id := c.Param("id")
 		db := models.GetDb()
 		action := models.Action{}
-		if err := db.First(&action,id).Error; err != nil {
-			c.AbortWithError(404,err)
+		if err := db.First(&action, id).Error; err != nil {
+			c.AbortWithError(404, err)
 			return
 		}
 		if err := kafka.StopAction(action); err != nil {
@@ -149,6 +153,7 @@ func (a *Action) Stop() gin.HandlerFunc {
 			return
 		}
 		action.StatusID = 5
+		action.Events = append(action.Events, models.Event{Type: "Stopped", TimeStamp: time.Now()})
 		if err := db.Save(&action).Error; err != nil {
 			c.AbortWithError(500, err)
 			return
