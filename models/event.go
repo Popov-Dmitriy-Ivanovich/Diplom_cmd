@@ -1,8 +1,8 @@
 package models
 
-import "time"
-
 type Event struct {
+	ID        uint
+	ActionID  uint
 	Type      string
-	TimeStamp time.Time
+	TimeStamp TimeStamp
 }

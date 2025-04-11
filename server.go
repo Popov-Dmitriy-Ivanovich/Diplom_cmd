@@ -40,8 +40,6 @@ func main() {
 
 	r := gin.Default()
 
-
-
 	apiGroup := r.Group("/api")
 	routes.WriteRoutes(apiGroup, &actions.Action{})
 

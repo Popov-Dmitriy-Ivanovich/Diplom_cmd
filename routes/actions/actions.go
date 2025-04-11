@@ -1,6 +1,9 @@
 package actions
 
 import (
+	"errors"
+	"fmt"
+	"strconv"
 	"time"
 
 	"github.com/Popov-Dmitriy-Ivanovich/Diplom_auth/middleware"
@@ -13,6 +16,8 @@ import (
 
 type Action struct {
 }
+
+var Limit uint = 999999
 
 //AR_VIEW_AND_RUN_ACTION
 
@@ -28,6 +33,7 @@ func (a *Action) WriteRoutes(rg *gin.RouterGroup) {
 	actionGroup.POST("/", a.Create())
 	actionGroup.PUT("/:id", a.Update())
 	actionGroup.DELETE("/:id", a.Delete())
+	actionGroup.GET("/limit/:limit", a.Limit())
 }
 
 // Get
@@ -65,7 +71,7 @@ func (a *Action) GetId() gin.HandlerFunc {
 		id := c.Param("id")
 		db := models.GetDb()
 		action := models.Action{}
-		if err := db.First(&action, id).Error; err != nil {
+		if err := db.Preload("Events").First(&action, id).Error; err != nil {
 			c.AbortWithError(404, err)
 			return
 		}
@@ -87,6 +93,19 @@ func (a *Action) Run() gin.HandlerFunc {
 		id := c.Param("id")
 		db := models.GetDb()
 		action := models.Action{}
+
+		activeActions := int64(0)
+		if err := db.Model(&models.Action{}).Debug().Where("status_id = ? or status_id = ?", 1, 2).Count(&activeActions).Error; err != nil {
+			c.AbortWithError(500, err)
+			return
+		}
+		fmt.Println("Active actions ", activeActions)
+		fmt.Println("Active limit ", Limit)
+		if activeActions >= int64(Limit) {
+			c.AbortWithError(422, errors.New("превышен лимит запущенных action"))
+			return
+		}
+
 		if err := db.First(&action, id).Error; err != nil {
 			c.AbortWithError(404, err)
 			return
@@ -96,7 +115,7 @@ func (a *Action) Run() gin.HandlerFunc {
 			return
 		}
 		action.StatusID = 2
-		action.Events = append(action.Events, models.Event{Type: "Launch", TimeStamp: time.Now()})
+		action.Events = append(action.Events, models.Event{Type: "Launch", TimeStamp: models.TimeStamp{time.Now()}})
 		if err := db.Save(&action).Error; err != nil {
 			c.AbortWithError(500, err)
 			return
@@ -153,12 +172,33 @@ func (a *Action) Stop() gin.HandlerFunc {
 			return
 		}
 		action.StatusID = 5
-		action.Events = append(action.Events, models.Event{Type: "Stopped", TimeStamp: time.Now()})
+		action.Events = append(action.Events, models.Event{Type: "Stopped", TimeStamp: models.TimeStamp{time.Now()}})
 		if err := db.Save(&action).Error; err != nil {
 			c.AbortWithError(500, err)
 			return
 		}
 		tgApi.Notify("Действие " + action.Name + "переведено в статус Останавливается")
 		c.JSON(200, gin.H{"action": action.Cmd})
+	}
+}
+
+// Get
+// @Summary      Set launched action
+// @Description  Устанавливает лимит запущенных action
+// @Tags         Actions
+// @Param        limit    path     int  true  "id Action"
+// @Produce      json
+// @Success      200  {object}   map[string]any
+// @Failure      404  {object}   string
+// @Router       /actions/limit/{limit} [get]
+func (a *Action) Limit() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		limit := c.Param("limit")
+		uintLimit, err := strconv.ParseUint(limit, 10, 64)
+		if err != nil {
+			c.AbortWithError(422, err)
+			return
+		}
+		Limit = uint(uintLimit)
 	}
 }
