@@ -12,10 +12,10 @@ import (
 	tgApi "github.com/Popov-Dmitriy-Ivanovich/Diplom_telegram/api"
 )
 
+var Stats string = ""
+
 type BashStatus struct {
-
 }
-
 
 func ServeStatusMessages() error {
 	consumer, err := sarama.NewConsumer([]string{os.Getenv("KAFKA_URL")}, nil)
@@ -32,9 +32,16 @@ func ServeStatusMessages() error {
 		panic(err)
 		return err
 	}
+
+	statResponseConsumer, err := consumer.ConsumePartition("StatResponse", 0, sarama.OffsetNewest)
+	if err != nil {
+		return err
+	}
+	defer statResponseConsumer.Close()
+
 	defer statusBashConsumer.Close()
 	db := models.GetDb()
-	
+
 	for {
 		select {
 		// (обработка входящего сообщения и отправка ответа в Kafka)
@@ -44,10 +51,10 @@ func ServeStatusMessages() error {
 				return errors.New("Connection closed")
 			}
 			log.Println("Got new message from driver")
-			
+
 			key := msg.Key
 
-			id, err := strconv.ParseUint(string(key),16,64)
+			id, err := strconv.ParseUint(string(key), 16, 64)
 			if err == nil {
 				action := models.Action{}
 				if err := db.First(&action, id).Error; err == nil {
@@ -57,10 +64,10 @@ func ServeStatusMessages() error {
 						action.StatusID = 1
 						action.LastLaunch = &models.DateOnly{Time: time.Now()}
 						tgApi.Notify("Действие " + action.Name + " переведено в статус Запущено")
-					} else if status=="Stoped"{
+					} else if status == "Stoped" {
 						action.StatusID = 3
 						tgApi.Notify("Действие " + action.Name + " переведено в статус Остановлено")
-					}else {
+					} else {
 						action.StatusID = 4
 						log.Println("Действие не было запущено или остановлено: " + status)
 					}
@@ -71,6 +78,12 @@ func ServeStatusMessages() error {
 			} else {
 				log.Println(err)
 			}
+		case msg, ok := <-statResponseConsumer.Messages():
+			if !ok {
+				log.Printf("connection closed")
+				return errors.New("Connection closed")
+			}
+			Stats = string(msg.Value)
 		}
 	}
 }

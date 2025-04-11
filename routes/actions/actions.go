@@ -49,11 +49,12 @@ func (a *Action) Get() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		db := models.GetDb()
 		ids := []uint{}
+		kafka.GetStats()
 		if err := db.Model(models.Action{}).Pluck("id", &ids).Error; err != nil {
 			c.AbortWithError(500, err)
 			return
 		}
-		c.JSON(200, gin.H{"ids": ids})
+		c.JSON(200, gin.H{"ids": ids, "stats": kafka.Stats})
 	}
 }
 
